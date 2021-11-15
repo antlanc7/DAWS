@@ -44,7 +44,7 @@ class Client(threading.Thread):
                 break
 
             #invio comando start al socket e creo il file
-            self.file = open(f"{self.id_client}_{acq_count}.csv", "w")
+            self.file = open(f"id{self.id_client}_acq{acq_count}.csv", "w")
             acq_count += 1
 
             with self.msg_queue_lock:
@@ -162,6 +162,12 @@ if __name__=="__main__":
             break
         if cmd.isnumeric(): #start per n secondi
             controller.start_all(int(cmd))
+        
+        #ESEMPIO NUOVO COMANDO
+        #elif cmd == "nuovocmd":
+        #    controller.send_all("nuovocmd")
+        #    # per mandare bytes vedi riga 120 (funzione start_all del controller)
+        
         elif cmd!="":   #esci scrivendo qualcosa a caso (no numeri)
             break
     controller.close_all()
