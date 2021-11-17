@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <driver/i2s.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <freertos/FreeRTOS.h>
@@ -14,10 +13,10 @@
 #define CMD_START                 0x01
 #define CMD_STOP                  "stop"
 
-#define WIFI_SSID                 "Quercia"//"RaspM5"//"TIM-19801747"
-#define WIFI_PSWD                 "queratolo"//"Gruppo6Ciao"//"R4QTQv5Yb3maOsan0ZxCBJd5"
+#define WIFI_SSID                 "RaspM5"
+#define WIFI_PSWD                 "Gruppo6Ciao"
 
-#define SERVER_ADDRESS            "192.168.43.72"//"192.168.3.1"//"192.168.43.72"
+#define SERVER_ADDRESS            "192.168.3.1"
 #define SERVER_PORT               3125
 
 #define ADC_PIN                   36
