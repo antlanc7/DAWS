@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry server</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <!-- navbar items, navbar burger... -->
+      </div>
+    </nav>
+    <h1>Ciao</h1>
+    
+    <div class="container">
+      <div class="columns graphs-container"></div>
+    </div>
+
+
+
+
+
+    <script type="text/javascript" charset="utf-8">
+      var socket = io();
+      var m5s = [];
+
+      function createGraph(id) {
+        const cont = document.getElementsByClassName("graphs-container")[0];
+        var newgra = document.createElement("div");
+        newgra.setAttribute("class", "card");
+        newgra.setAttribute("class", "column");
+        newgra.innerHTML = '<div><canvas id="' + id + '" width="200" height="200"></canvas><script></div>';
+        cont.appendChild(newgra);
+      }
+
+
+
+      socket.on("M5-new-connection", function(json) {
+        m5s.push(json.id);
+        createGraph(json.id);
+      });
+
+      socket.on("data-from-id", function(json) {
+
+      });
+    </script>
+</body>
+</html>

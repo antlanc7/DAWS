@@ -3,11 +3,15 @@ from scipy import signal
 import threading
 from client import Client
 
+from flask_socketio import emit
+
+
 #classe che raccoglie i dati ricevuti dai diversi sensori attraverso i socket
 class Controller: 
-    def __init__(self):
+    def __init__(self,socketio):
         self.clients : list[Client] = []
         self.l = threading.Lock()
+        self.socketio = socketio
 
     def band_pass_filter(s) -> np.ndarray:
         fs = 4000
@@ -28,6 +32,7 @@ class Controller:
             id = len(self.clients)
             client = Client(id, conn, addr)
             self.clients.append(client)
+            self.socketio.emit("M5-new-connection", {"id": str(id)})
             client.start()
     
     def start_all(self, acq_time:int):
