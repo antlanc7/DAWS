@@ -30,9 +30,13 @@ class Client(threading.Thread):
     
     def log(self, msg):
         print(f"ID={self.id_client} - {msg}")
+    
+    def save_buffer_to_file(self):
+        self.file.write("\n".join(map(str, self.data))+"\n")
+        self.data.clear()
             
     def run(self):
-        
+        filename = ""
         acq_count = 0
         while True: #ciclo principale del thread del client
 
@@ -42,9 +46,9 @@ class Client(threading.Thread):
             
             if self.closed:
                 break
-
+            filename = f"id{self.id_client}_acq{acq_count}.csv"
             #invio comando start al socket e creo il file
-            self.file = open(f"id{self.id_client}_acq{acq_count}.csv", "w")
+            self.file = open(filename, "w")
             acq_count += 1
 
             with self.msg_queue_lock:
@@ -63,6 +67,7 @@ class Client(threading.Thread):
                     break
                 elif n == 4 and "stop" in data.decode():
                     self.log("Ricevuto stop")
+                    self.save_buffer_to_file()
                     break
                 self.log(f"Ricezione {count}: Ricevuti {n} bytes")
                 print(data)
@@ -79,11 +84,10 @@ class Client(threading.Thread):
                 print(data_parsed)
                 self.data.extend(data_parsed)
                 if len(self.data) > 2048:
-                    self.file.write("\n".join(map(str, self.data))+"\n")
-                    self.data.clear()
-            self.log("Salvataggio file in corso...")
+                    self.save_buffer_to_file()
+            self.log(f"Salvataggio file {filename} in corso...")
             self.file.close()
-            self.log("Salvataggio completato")
+            self.log(f"Salvataggio file {filename} completato")
 
         self.conn.close()
         self.log("Connessione chiusa")
