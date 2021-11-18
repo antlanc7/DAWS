@@ -6,18 +6,13 @@
 #include <freertos/semphr.h>
 #include <freertos/queue.h>
 #include <M5StickC.h>
+#include "wifi_creds.h"
 
 #define SAMPLING_FREQUENCY_HZ     2000
 #define BUFFER_LENGTH             64
 
 #define CMD_START                 0x01
 #define CMD_STOP                  "stop"
-
-#define WIFI_SSID                 "RaspM5"
-#define WIFI_PSWD                 "Gruppo6Ciao"
-
-#define SERVER_ADDRESS            "192.168.3.1"
-#define SERVER_PORT               3125
 
 #define ADC_PIN                   36
 
@@ -35,6 +30,7 @@ void sendData( void * parameter );
 
 void setup() {
   M5.begin();
+  //Serial.begin(9600);
   M5.Lcd.fillScreen( BLACK );
   M5.Lcd.setRotation( 3 );
 
@@ -53,7 +49,7 @@ void setup() {
     delay(500);
   }
   M5.Lcd.fillScreen( BLACK );
-  M5.lcd.fillCircle( M5.Lcd.width() - 15, 7, 5, GREEN );
+  M5.Lcd.fillCircle( M5.Lcd.width() - 15, 7, 5, GREEN );
 
   M5.Lcd.setCursor( 5, 5 );
   M5.Lcd.println( "TCP/IP connection." );
@@ -100,25 +96,20 @@ void getDataT( void * uint8tTime) {
   TickType_t tTime = ( * ( ( uint8_t * ) uint8tTime) ) * 1000 * portTICK_PERIOD_MS;
   uint16_t samples[ BUFFER_LENGTH ];
 
-  if ( SAMPLING_FREQUENCY_HZ == 0) {
-    #undef SAMPLING_FREQUENCY_HZ
-    #define SAMPLING_FREQUENCY_HZ 2000
-    // vTaskDelete(NULL);
-  }
-
   uint16_t usDelay = 1000000 / SAMPLING_FREQUENCY_HZ;
 
   TickType_t xLastWakeTime;
   unsigned long now = 0;
 
   xLastWakeTime = xTaskGetTickCount();
-  
+  //int k=0; // contatore buffers/pacchetti
   while ( xTaskGetTickCount() - xLastWakeTime  <= tTime ) {
+    //Serial.print(k++);Serial.print('\t');Serial.println(xTaskGetTickCount() - xLastWakeTime);
     for ( int i = 0; i < BUFFER_LENGTH; i += 1 ) {
       while ( micros() - now <= usDelay );
       now = micros();
-      
       samples[i] = analogRead( ADC_PIN );
+      //Serial.println(now);
     }
     if ( xQueueSend( data, & samples, 0 ) != pdTRUE ) {
       // Serial.println("Queue full!");
@@ -134,7 +125,6 @@ void sendData( void * param ) {
   size_t sampleSize = sizeof( samples );
 
   while (1) {
-
     if ( xQueueReceive( data, & samples, 1000 / portTICK_PERIOD_MS ) == pdTRUE ) {
       cmd_client.write( ( uint8_t * ) samples, sampleSize );
     } else {
