@@ -5,6 +5,7 @@ import socket
 import threading
 from controller import Controller
 
+controller = None
 
 def acceptation_thread(s:socket.socket, controller:Controller):
     try:
@@ -33,7 +34,7 @@ def m5_connection(id):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html", clients = controller.clients)
 
 
 if __name__ == '__main__':

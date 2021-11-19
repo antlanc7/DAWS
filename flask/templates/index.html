@@ -17,7 +17,8 @@
     </nav>
     
     <div class="container">
-      <div class="graphs-container"></div>
+      <div class="graphs-container">
+      </div>
     </div>
 
 
@@ -76,6 +77,12 @@
       socket.on("data-from-id", function(json) {
 
       });
+
+            
+      {% for c in controller.clients %}
+        m5s.push({{c.id}})
+        createGraph({{c.id}})
+      {% endfor %}
     </script>
 </body>
 </html>
