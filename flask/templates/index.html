@@ -15,8 +15,14 @@
         <!-- navbar items, navbar burger... -->
       </div>
     </nav>
-    
+
+
+
     <div class="container">
+      <div>
+        <input type="number" id="sec"/>
+        <button class = "button is-primary" onclick = "startAcquisition()"/>
+      </div>
       <div class="graphs-container">
       </div>
     </div>
@@ -26,7 +32,7 @@
 
 
     <script type="text/javascript" charset="utf-8">
-      var socket = io();
+      var socket = io("localhost:5000");
       var m5s = [];
 
       function createGraph(id) {
@@ -40,49 +46,40 @@
         const myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
                 datasets: [{
-                    label: '# of Votes',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
+                    label: 'Client '+id,
+                    data: [],
                 }]
             }
         });
-        return myChart;
+        m5s.push({ "id": id, "graph": myChart });
       }
 
-      
+      function startAcquisition() {
+        const sec = document.getElementById("sec").value;
+        socket.emit("start", sec)
+      }
 
       socket.on("M5-new-connection", function(json) {
-        m5s.push(json.id);
         createGraph(json.id);
+        
       });
 
       socket.on("data-from-id", function(json) {
-
+        console.log(json);
+        lastCnt =  m5s[json.id].graph.data.labels.length;
+        newLabels = [...json.data.keys()].map(x=>x+lastCnt);
+        console.log(newLabels);
+        m5s[json.id].graph.data.labels.push(...newLabels);
+        m5s[json.id].graph.data.datasets[0].data.push(...json.data);
+        m5s[json.id].graph.update();
       });
 
-            
-      {% for c in controller.clients %}
-        m5s.push({{c.id}})
-        createGraph({{c.id}})
-      {% endfor %}
+      socket.on("clients-init", function(json){
+        for (id of json.clients){
+          createGraph(id);
+        }
+      });
     </script>
 </body>
 </html>

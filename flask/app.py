@@ -5,7 +5,7 @@ import socket
 import threading
 from controller import Controller
 
-controller = None
+
 
 def acceptation_thread(s:socket.socket, controller:Controller):
     try:
@@ -20,16 +20,22 @@ def acceptation_thread(s:socket.socket, controller:Controller):
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+controller = Controller(socketio)
 
 @socketio.on("connect")
 def browser_connection():
     # connessione del client browser
-    print("ciao")
+    socketio.emit("clients-init", {"clients":[c.id_client for c in controller.clients]})
+
 
 @socketio.on("M5-new-connection")
 def m5_connection(id):
     # bisogna fare l'emit alla connessione del m5 nel controller
     print(f"\nM5Client connected. ID: {id}\n")
+
+@socketio.on("start")
+def start_acquisition(sec):
+    controller.start_all(int(sec))
 
 
 @app.route("/")
@@ -50,8 +56,9 @@ if __name__ == '__main__':
     s.listen()
     print(f"Server avviato sulla porta {PORT}")
 
-    controller = Controller(socketio)
+
     acc_thread = threading.Thread(target=acceptation_thread, args=(s,controller), daemon=True)
     acc_thread.start()
 
     socketio.run(app)
+

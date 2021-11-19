@@ -30,7 +30,7 @@ class Controller:
     def new_client(self,conn,addr):
         with self.l:
             id = len(self.clients)
-            client = Client(id, conn, addr)
+            client = Client(id, conn, addr, self.socketio)
             self.clients.append(client)
             self.socketio.emit("M5-new-connection", {"id": str(id)})
             client.start()

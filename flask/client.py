@@ -3,7 +3,7 @@ import socket
 
 class Client(threading.Thread):
 
-    def __init__(self, id:int, conn:socket.socket, addr:str) -> None:
+    def __init__(self, id:int, conn:socket.socket, addr:str, socketio) -> None:
         super().__init__()
         self.data : list[int] = []
         self.msg_queue : list[str] = []
@@ -13,6 +13,7 @@ class Client(threading.Thread):
         self.addr = addr
         self.closed = False
         self.msg_queue_lock = threading.Lock()
+        self.socketio = socketio
         print(f"Il client {self.addr} si è connesso con ID={self.id_client}")
 
     def send_msg(self, msg:str):
@@ -77,6 +78,7 @@ class Client(threading.Thread):
                     continue
                 self.log(f"Lunghezza vettore: {len(data_parsed)}")
                 print(data_parsed)
+                self.socketio.emit("data-from-id", {"id": self.id_client, "data": data_parsed})
                 self.data.extend(data_parsed)
                 if len(self.data) > 2048:
                     self.save_buffer_to_file()
