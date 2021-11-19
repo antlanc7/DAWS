@@ -15,10 +15,9 @@
         <!-- navbar items, navbar burger... -->
       </div>
     </nav>
-    <h1>Ciao</h1>
     
     <div class="container">
-      <div class="columns graphs-container"></div>
+      <div class="graphs-container"></div>
     </div>
 
 
@@ -33,12 +32,41 @@
         const cont = document.getElementsByClassName("graphs-container")[0];
         var newgra = document.createElement("div");
         newgra.setAttribute("class", "card");
-        newgra.setAttribute("class", "column");
-        newgra.innerHTML = '<div><canvas id="' + id + '" width="200" height="200"></canvas><script></div>';
+        newgra.innerHTML = '<div><canvas id="M5-' + id + '" width="50" height="10"></canvas><script></div>';
         cont.appendChild(newgra);
+        
+        const ctx = document.getElementById("M5-" + id).getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [12, 19, 3, 5, 2, 3],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+        return myChart;
       }
 
-
+      
 
       socket.on("M5-new-connection", function(json) {
         m5s.push(json.id);
