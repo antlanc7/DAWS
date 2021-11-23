@@ -5,8 +5,6 @@ import socket
 import threading
 from controller import Controller
 
-
-
 def acceptation_thread(s:socket.socket, controller:Controller):
     try:
         while True:
@@ -25,7 +23,7 @@ controller = Controller(socketio)
 @socketio.on("connect")
 def browser_connection():
     # connessione del client browser
-    socketio.emit("clients-init", {"clients":[c.id_client for c in controller.clients]})
+    socketio.emit("clients-init", {"clients":[c.id_client for c in controller.get_active()]})
 
 
 @socketio.on("M5-new-connection")
@@ -36,7 +34,6 @@ def m5_connection(id):
 @socketio.on("start")
 def start_acquisition(sec):
     controller.start_all(int(sec))
-
 
 @app.route("/")
 def home():

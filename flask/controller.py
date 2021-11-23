@@ -12,6 +12,7 @@ class Controller:
         self.clients : list[Client] = []
         self.l = threading.Lock()
         self.socketio = socketio
+        self.ids = 0
 
     def band_pass_filter(s) -> np.ndarray:
         fs = 4000
@@ -29,10 +30,11 @@ class Controller:
     
     def new_client(self,conn,addr):
         with self.l:
-            id = len(self.clients)
-            client = Client(id, conn, addr, self.socketio)
+            # id = len(self.clients)
+            client = Client(self.ids, conn, addr, self.socketio)
             self.clients.append(client)
-            self.socketio.emit("M5-new-connection", {"id": str(id)})
+            self.socketio.emit("M5-new-connection", {"id": str(self.ids)})
+            self.ids += 1
             client.start()
     
     def start_all(self, acq_time:int):
@@ -47,3 +49,7 @@ class Controller:
             client.close()
             client.join()
         self.clients.clear()
+
+    def get_active(self):
+        self.clients = [c for c in self.clients if c.is_alive]
+        return self.clients

@@ -12,6 +12,7 @@
 #define BUFFER_LENGTH             64
 
 #define CMD_START                 0x01
+#define CMD_PING                  0x02
 #define CMD_STOP                  "stop"
 
 #define ADC_PIN                   36
@@ -30,7 +31,7 @@ void sendData( void * parameter );
 
 void setup() {
   M5.begin();
-  //Serial.begin(9600);
+  Serial.begin(9600);
   M5.Lcd.fillScreen( BLACK );
   M5.Lcd.setRotation( 3 );
 
@@ -86,6 +87,8 @@ void loop() {
       M5.Lcd.setCursor( 0, cy );
       M5.Lcd.print("  Done ");
       M5.Lcd.setCursor( 0, cy );
+    } else if ( cmd[0] == CMD_PING ) {
+      cmd_client.write( CMD_PING );
     }
   }
   vTaskDelay( 1 / portTICK_PERIOD_MS );

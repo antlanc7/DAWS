@@ -1,7 +1,12 @@
 import threading
 import socket
+import time
+from client_utils import *
 
 class Client(threading.Thread):
+
+    PING = 2
+    is_alive = True
 
     def __init__(self, id:int, conn:socket.socket, addr:str, socketio) -> None:
         super().__init__()
@@ -15,6 +20,8 @@ class Client(threading.Thread):
         self.msg_queue_lock = threading.Lock()
         self.socketio = socketio
         print(f"Il client {self.addr} si è connesso con ID={self.id_client}")
+
+        self.conn.settimeout(3)
 
     def send_msg(self, msg:str):
         with self.msg_queue_lock:
@@ -30,15 +37,37 @@ class Client(threading.Thread):
     def save_buffer_to_file(self):
         self.file.write("\n".join(map(str, self.data))+"\n")
         self.data.clear()
+
+    def ping(self):
+        try:
+            self.conn.sendall(bytearray([self.PING]))
+            self.conn.recv(128)
+        except socket.timeout:
+            self.is_alive = False
+            self.socketio.emit("connection-lost", {"id" : self.id_client})
+            raise ConnectionLostException
+        except ConnectionResetError:
+            self.is_alive = False
+            self.socketio.emit("connection-lost", {"id" : self.id_client})
+            raise ConnectionLostException
             
     def run(self):
         filename = ""
         acq_count = 0
+        now = time.time()
         while True: #ciclo principale del thread del client
-
+            
             #attesa comando start o close
             while not self.msg_queue and not self.closed:
-                pass
+                if time.time() - now > 5:
+                    now = time.time()
+                    try:
+                        self.ping()
+                    except ConnectionLostException:
+                        break
+
+            if not self.is_alive:
+                break
             
             if self.closed:
                 break
@@ -50,7 +79,7 @@ class Client(threading.Thread):
             with self.msg_queue_lock:
                 while (self.msg_queue):
                     self.conn.sendall(self.msg_queue.pop(0).encode())
-
+            
             #ciclo di acquisizione
             count = 0   #contatore pacchetti
             while True:
@@ -85,6 +114,7 @@ class Client(threading.Thread):
             self.log(f"Salvataggio file {filename} in corso...")
             self.file.close()
             self.log(f"Salvataggio file {filename} completato")
+            self.socketio.emit("acquisition-terminated", {"id": self.id_client})
 
         self.conn.close()
         self.log("Connessione chiusa")

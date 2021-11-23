@@ -10,19 +10,36 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-      <div class="navbar-brand">
-        <!-- navbar items, navbar burger... -->
-      </div>
-    </nav>
+    
 
 
 
     <div class="container">
-      <div>
-        <input type="number" id="sec"/>
-        <button class = "button is-primary" onclick = "startAcquisition()"/>
-      </div>
+
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-menu">
+          <div class="navbar-start">
+            <div class="navbar-item">
+              <div class="field has-addons">
+                <div class="control">
+                  <input class="input" type="number" id="sec" placeholder="Acquisition time seconds" required>
+                </div>
+                <div class="control">
+                  <input type="button" class="button is-primary" value="Start" onclick = "startAcquisition()"></input>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="navbar-item">
+            <div class="progress-bar"></div>
+          </div>
+          
+        </div>
+      </nav>
+
+
       <div class="graphs-container">
       </div>
     </div>
@@ -32,54 +49,128 @@
 
 
     <script type="text/javascript" charset="utf-8">
-      var socket = io("localhost:5000");
+      var socket = io();
       var m5s = [];
+      var newconn = true;
 
       function createGraph(id) {
         const cont = document.getElementsByClassName("graphs-container")[0];
+
         var newgra = document.createElement("div");
-        newgra.setAttribute("class", "card");
-        newgra.innerHTML = '<div><canvas id="M5-' + id + '" width="50" height="10"></canvas><script></div>';
+        newgra.setAttribute("class", "box");
+        newgra.setAttribute("class", "M5-" + id);
+        const canvas = '<canvas id="M5-' + id + '-chart" width="50" height="10"></canvas>';
+        const bottom = '<div class="container"><div class="navbar is-light">\
+          <div class="navbar-start">\
+            <div class="navbar-item">\
+              <div class="field has-addons">\
+                <div class="control">\
+                  <input class="input" type="text" id="csv-name-" ' + id + ' placeholder="Acquisition time seconds" required>\
+                </div>\
+                <div class="control">\
+                  <input type="button" class="button is-primary" value="Save" onclick = ""></input>\
+                </div>\
+              </div>\
+            </div>\
+          </div>\
+          <div class="navbar-end">\
+            <div class="navbar-item">\
+              <input type="button" value="Kill" class="button is-danger"></input>\
+            </div>\
+            <div class="navbar-item">\
+              <input type="button" value="Where is it!" class="button is-primary"></input>\
+            </div>\
+          </div>\
+        </div></div>';
+        newgra.innerHTML = canvas + bottom ;
+        
         cont.appendChild(newgra);
         
-        const ctx = document.getElementById("M5-" + id).getContext('2d');
+        const ctx = document.getElementById("M5-" + id + "-chart").getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'line',
             data: {
                 datasets: [{
                     label: 'Client '+id,
                     data: [],
+                    borderColor: 'rgb(75, 192, 192)',
                 }]
+            },
+            options : {
+              animation: true,
+              datasets: {
+                line: {
+                    pointRadius: 0 // disable for all `'line'` datasets
+                }
+              },
+              elements: {
+                point: {
+                    radius: 0 // default to disabled in all datasets
+                }
+              }
             }
         });
-        m5s.push({ "id": id, "graph": myChart });
+        m5s.push({ "id": id, "graph": myChart, "status": "idle" });
       }
 
       function startAcquisition() {
+        m5s.forEach((el, idx, arr) => {
+          arr[idx].status = "running";
+          arr[idx].graph.data.labels = [];
+          arr[idx].graph.data.datasets[0].data = [];
+        });
+        const navend = document.querySelector(".progress-bar");
         const sec = document.getElementById("sec").value;
-        socket.emit("start", sec)
+        socket.emit("start", sec);
+        navend.innerHTML = '<progress class="progress is-large is-primary" id="progress-bar" max="100"></progress>'
       }
 
       socket.on("M5-new-connection", function(json) {
         createGraph(json.id);
-        
       });
 
       socket.on("data-from-id", function(json) {
         console.log(json);
-        lastCnt =  m5s[json.id].graph.data.labels.length;
+        m5 = m5s.filter((el) => el.id == json.id)[0];
+        
+        lastCnt =  m5.graph.data.labels.length;
         newLabels = [...json.data.keys()].map(x=>x+lastCnt);
         console.log(newLabels);
-        m5s[json.id].graph.data.labels.push(...newLabels);
-        m5s[json.id].graph.data.datasets[0].data.push(...json.data);
-        m5s[json.id].graph.update();
+        m5.graph.data.labels.push(...newLabels);
+        m5.graph.data.datasets[0].data.push(...json.data);
+        //m5.graph.update();
+      });
+
+      socket.on("acquisition-terminated", function(json){
+        m5s.filter(el => el.id == json.id).forEach(el => { 
+          el.graph.update();
+          el.status = "idle";
+        });
+        if (m5s.filter(el => el.status == "running").length == 0) { // almeno uno non ha finito
+          // togli progress bar
+          const d = document.querySelector("#progress-bar");
+          d.parentNode.removeChild(d);
+        }
       });
 
       socket.on("clients-init", function(json){
-        for (id of json.clients){
-          createGraph(id);
+        if ( newconn == true) {
+          for (id of json.clients){
+            createGraph(id);
+          }
+          newconn = false;
         }
       });
+
+      socket.on("connection-lost", function(json) {
+        console.log("Lost connection with: " + json.id);
+        var d = document.querySelector(".M5-" + json.id);
+        d.parentNode.removeChild(d);
+        m5s = m5s.filter(function(elem){
+          elem.id != json.id;
+        });
+      });
+
     </script>
 </body>
 </html>
