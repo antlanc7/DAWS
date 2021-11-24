@@ -35,6 +35,10 @@ def m5_connection(id):
 def start_acquisition(sec):
     controller.start_all(int(sec))
 
+@socketio.on("whereisit")
+def where_is_it(id):
+    controller.where_is_it(int(id))
+
 @app.route("/")
 def home():
     return render_template("index.html", clients = controller.clients)

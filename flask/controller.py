@@ -2,12 +2,14 @@ import numpy as np
 from scipy import signal
 import threading
 from client import Client
+import client_utils
 
 from flask_socketio import emit
 
 
 #classe che raccoglie i dati ricevuti dai diversi sensori attraverso i socket
 class Controller: 
+
     def __init__(self,socketio):
         self.clients : list[Client] = []
         self.l = threading.Lock()
@@ -38,7 +40,7 @@ class Controller:
             client.start()
     
     def start_all(self, acq_time:int):
-        self.send_all(bytearray([1,acq_time]).decode())
+        self.send_all(bytearray([client_utils.START ,acq_time]))
 
     def send_all(self, msg:str):
         for client in self.clients:
@@ -53,3 +55,9 @@ class Controller:
     def get_active(self):
         self.clients = [c for c in self.clients if c.is_alive]
         return self.clients
+    
+    def where_is_it(self, id : int):
+        for c in self.clients:
+            if c.id_client==id:
+                c.send_msg(bytearray([client_utils.WHEREISIT]))
+                break

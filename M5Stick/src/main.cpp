@@ -13,8 +13,10 @@
 
 #define CMD_START                 0x01
 #define CMD_PING                  0x02
+#define CMD_WHEREISIT             0x03
 #define CMD_STOP                  "stop"
 
+#define LED_PIN                   10
 #define ADC_PIN                   36
 
 #define EVENT_ACQ_END_BIT         ( 1 << 0 )
@@ -36,6 +38,8 @@ void setup() {
   M5.Lcd.setRotation( 3 );
 
   pinMode( ADC_PIN, INPUT );
+  pinMode( LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
   M5.Lcd.drawCircle( M5.Lcd.width() - 15, 7, 5, RED);
 
   M5.Lcd.setCursor( 5, 5 );
@@ -53,12 +57,12 @@ void setup() {
   M5.Lcd.fillCircle( M5.Lcd.width() - 15, 7, 5, GREEN );
 
   M5.Lcd.setCursor( 5, 5 );
-  M5.Lcd.println( "TCP/IP connection." );
+  M5.Lcd.println( "TCP/IP connection:" );
   if ( cmd_client.connect(SERVER_ADDRESS, SERVER_PORT) ) {
-    M5.Lcd.println( " Connected to the server" );
-    M5.Lcd.print( "  SERVER IP: " );
+    M5.Lcd.println( "Connected to the server" );
+    M5.Lcd.print( "SERVER IP: " );
     M5.Lcd.println( SERVER_ADDRESS );
-    M5.Lcd.print( "  SERVER PORT: " );
+    M5.Lcd.print( "SERVER PORT: " );
     M5.Lcd.println( SERVER_PORT );
   } else {
     M5.Lcd.println( "\tIMPOSSIBLE to connect with server." );
@@ -76,7 +80,7 @@ void loop() {
     cmd_client.readBytes( cmd, sizeof(cmd) );
     if ( ( cmd[0] == CMD_START ) && ( cmd[1] != 0 ) ) {
       int16_t cy = M5.Lcd.getCursorY();
-      M5.Lcd.printf(" Start acquisition: %d s", cmd[1]);
+      M5.Lcd.printf(" Started acquisition for %d s", cmd[1]);
 
       xTaskCreatePinnedToCore( & sendData, "SEND DATA", 4096, NULL, 5, NULL, 0);
       xTaskCreatePinnedToCore( & getDataT, "GET DATA", 4096, & cmd[1], 5, NULL, 1 );
@@ -89,6 +93,10 @@ void loop() {
       M5.Lcd.setCursor( 0, cy );
     } else if ( cmd[0] == CMD_PING ) {
       cmd_client.write( CMD_PING );
+    } else if ( cmd[0] == CMD_WHEREISIT ){
+      digitalWrite(LED_PIN, LOW); //il led ha logica invertita
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+      digitalWrite(LED_PIN, HIGH);
     }
   }
   vTaskDelay( 1 / portTICK_PERIOD_MS );

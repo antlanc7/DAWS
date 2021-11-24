@@ -11,10 +11,8 @@
 </head>
 <body>
     
-
-
-
     <div class="container">
+    <center><h1 class="title">Acquisition Dashboard</h1></center>
 
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-menu">
@@ -65,20 +63,20 @@
             <div class="navbar-item">\
               <div class="field has-addons">\
                 <div class="control">\
-                  <input class="input" type="text" id="csv-name-" ' + id + ' placeholder="Acquisition time seconds" required>\
+                  <input class="input" type="text" id="csv-name-" ' + id + ' placeholder="Acquisition file name" required disabled>\
                 </div>\
                 <div class="control">\
-                  <input type="button" class="button is-primary" value="Save" onclick = ""></input>\
+                  <input type="button" class="button is-primary" value="Save" onclick = "" disabled></input>\
                 </div>\
               </div>\
             </div>\
           </div>\
           <div class="navbar-end">\
             <div class="navbar-item">\
-              <input type="button" value="Kill" class="button is-danger"></input>\
+              <input type="button" value="Kill" class="button is-danger" disabled></input>\
             </div>\
             <div class="navbar-item">\
-              <input type="button" value="Where is it!" class="button is-primary"></input>\
+              <input type="button" value="Where is it?" class="button is-primary" onclick="whereisit('+id+')"></input>\
             </div>\
           </div>\
         </div></div>';
@@ -97,7 +95,7 @@
                 }]
             },
             options : {
-              animation: true,
+              animation: false,
               datasets: {
                 line: {
                     pointRadius: 0 // disable for all `'line'` datasets
@@ -123,6 +121,10 @@
         const sec = document.getElementById("sec").value;
         socket.emit("start", sec);
         navend.innerHTML = '<progress class="progress is-large is-primary" id="progress-bar" max="100"></progress>'
+      }
+
+      function whereisit(id) {
+        socket.emit("whereisit",id);
       }
 
       socket.on("M5-new-connection", function(json) {
