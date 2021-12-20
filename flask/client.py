@@ -43,6 +43,7 @@ class Client(threading.Thread):
             self.conn.recv(128)
             return True
         except (socket.timeout, ConnectionResetError):
+            # 3 seconds timeout, see __init__
             self.socketio.emit("connection-lost", {"id" : self.id_client})
             return False
 
