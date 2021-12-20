@@ -27,13 +27,17 @@ WiFiClient cmd_client;
 EventGroupHandle_t eg;
 QueueHandle_t data;
 
+int16_t cy;
+uint8_t cmd[8];
+
 void getDataT( void * uint8tTime );
 void sendData( void * parameter );
+void whereIsIt( void * parameter);
 
 
 void setup() {
-  M5.begin();
-  Serial.begin(9600);
+  M5.begin(); //inizializza anche la seriale a 115200 baud
+  M5.Axp.EnableCoulombcounter();
   M5.Lcd.fillScreen( BLACK );
   M5.Lcd.setRotation( 3 );
 
@@ -66,38 +70,37 @@ void setup() {
     M5.Lcd.println( SERVER_PORT );
   } else {
     M5.Lcd.println( "\tIMPOSSIBLE to connect with server." );
-    while ( 1 );
+    while ( 1 );  //it blocks here if server unavailable.
   }
-
+  cy = M5.Lcd.getCursorY();
   eg = xEventGroupCreate();
   data = xQueueCreate( 5, BUFFER_LENGTH * 2 );
 }
 
 
 void loop() {
-  if ( cmd_client.available() ) {
-    uint8_t cmd[ 2 ];
-    cmd_client.readBytes( cmd, sizeof(cmd) );
+  int msgsize;
+  if ( (msgsize = cmd_client.available()) > 0 ) {
+    cmd_client.readBytes( cmd, msgsize );
     if ( ( cmd[0] == CMD_START ) && ( cmd[1] != 0 ) ) {
-      int16_t cy = M5.Lcd.getCursorY();
-      M5.Lcd.printf(" Started acquisition for %d s", cmd[1]);
+      M5.Lcd.setCursor(0, cy);
+      M5.Lcd.println(" Started acquisition");
+      M5.Lcd.printf(" Duration: %d s", cmd[1]);
 
       xTaskCreatePinnedToCore( & sendData, "SEND DATA", 4096, NULL, 5, NULL, 0);
       xTaskCreatePinnedToCore( & getDataT, "GET DATA", 4096, & cmd[1], 5, NULL, 1 );
 
       xEventGroupWaitBits( eg, EVENT_ACQ_END_BIT, pdTRUE, pdTRUE, portMAX_DELAY );
-      M5.Lcd.setCursor( 0, cy );
-      M5.Lcd.print("                              ");
+      M5.Lcd.fillRect(0, cy, M5.Lcd.width(), M5.Lcd.height()-cy, BLACK);
       M5.Lcd.setCursor( 0, cy );
       M5.Lcd.print("  Done ");
-      M5.Lcd.setCursor( 0, cy );
     } else if ( cmd[0] == CMD_PING ) {
       cmd_client.write( CMD_PING );
     } else if ( cmd[0] == CMD_WHEREISIT ){
-      digitalWrite(LED_PIN, LOW); //il led ha logica invertita
-      vTaskDelay(500 / portTICK_PERIOD_MS);
-      digitalWrite(LED_PIN, HIGH);
+      xTaskCreatePinnedToCore( &whereIsIt, "WHERE IS IT", 1024, NULL, 6, NULL, 1);
     }
+    M5.Lcd.setCursor(0, M5.Lcd.height()-10);
+    M5.Lcd.printf("%.0f%%", (M5.Axp.GetBatVoltage() - 3.3) * 100 / (4.2 - 3.3));
   }
   vTaskDelay( 1 / portTICK_PERIOD_MS );
 }
@@ -146,4 +149,11 @@ void sendData( void * param ) {
       vTaskDelete( NULL );
     }
   }
+}
+
+void whereIsIt(void * param){
+  digitalWrite(LED_PIN, LOW); //il led ha logica invertita
+  vTaskDelay(500 / portTICK_PERIOD_MS);
+  digitalWrite(LED_PIN, HIGH);
+  vTaskDelete(NULL);
 }
