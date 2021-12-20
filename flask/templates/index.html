@@ -112,13 +112,14 @@
       }
 
       function startAcquisition() {
+        const sec = document.getElementById("sec").value;
+        if (sec=="" || m5s.length==0) return;
         m5s.forEach((el, idx, arr) => {
           arr[idx].status = "running";
           arr[idx].graph.data.labels = [];
           arr[idx].graph.data.datasets[0].data = [];
         });
         const navend = document.querySelector(".progress-bar");
-        const sec = document.getElementById("sec").value;
         socket.emit("start", sec);
         navend.innerHTML = '<progress class="progress is-large is-primary" id="progress-bar" max="100"></progress>'
       }
