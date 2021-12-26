@@ -4,6 +4,9 @@ import time
 import client_utils
 
 class Client(threading.Thread):
+    """ M5 client 
+    extends Thread. 1 Thread running for every client
+    """
 
     def __init__(self, id:int, conn:socket.socket, addr:str, socketio) -> None:
         super().__init__()
@@ -21,24 +24,38 @@ class Client(threading.Thread):
 
         print(f"Il client {self.addr} si è connesso con ID={self.id_client}")
 
-        self.conn.settimeout(3)
+        self.conn.settimeout(3) # timeout waiting response from M5
 
     def send_msg(self, msg:bytearray):
+        """ It add messages to client cmd queue.
+        USE THIS TO SEND MESSAGES
+
+        args:
+            msg -- message to send
+        """
         with self.msg_queue_lock:
             self.msg_queue.append(msg)
 
     def close(self):
+        """ Close connection indirectly """
         if not self.closed:
             self.closed = True
     
     def log(self, msg):
+        """ log message showind id """
         print(f"ID={self.id_client} - {msg}")
     
     def save_buffer_to_file(self):
+        """ save actual internal data buffer on file """
         self.file.write("\n".join(map(str, self.data))+"\n")
         self.data.clear()
 
     def ping(self) -> bool:
+        """ Ping M5 and wait for response 
+        
+        return true if M5 answer in less than 3 seconds, false otherwise.
+        If false connection is supposed to be lost.
+        """
         try:
             self.conn.recv(128)
             return True
@@ -48,6 +65,7 @@ class Client(threading.Thread):
             return False
 
     def acq(self, msg):
+        """ Start acquisition """
         #ACQUISIZIONE
         filename = f"id{self.id_client}_acq{self.acq_count}.csv"
         #invio comando start al socket e creo il file
@@ -96,6 +114,10 @@ class Client(threading.Thread):
         self.socketio.emit("acquisition-terminated", {"id": self.id_client})
             
     def run(self):
+        """ Thread function.
+        if there is not any commands it ping M5 to test connection,
+        else parse and send message to M5.
+        """
         now = time.time()
         while True: #ciclo principale del thread del client
             #attesa comando start o close

@@ -52,6 +52,7 @@
       var newconn = true;
 
       function createGraph(id) {
+        /* create plot for id's client*/
         const cont = document.getElementsByClassName("graphs-container")[0];
 
         var newgra = document.createElement("div");
@@ -112,6 +113,7 @@
       }
 
       function startAcquisition() {
+        /* emit message to start acquisition */
         const sec = document.getElementById("sec").value;
         if (sec=="" || m5s.length==0) return;
         m5s.forEach((el, idx, arr) => {
@@ -125,14 +127,17 @@
       }
 
       function whereisit(id) {
+        /* emit message to check where is a client */
         socket.emit("whereisit",id);
       }
 
       socket.on("M5-new-connection", function(json) {
+        /* create chart on M5 new connection */
         createGraph(json.id);
       });
 
       socket.on("data-from-id", function(json) {
+        /* Update client data when are received */
         console.log(json);
         m5 = m5s.filter((el) => el.id == json.id)[0];
         
@@ -145,6 +150,7 @@
       });
 
       socket.on("acquisition-terminated", function(json){
+        /* if all clients are done, remove the progress bar */
         m5s.filter(el => el.id == json.id).forEach(el => { 
           el.graph.update();
           el.status = "idle";
@@ -157,6 +163,7 @@
       });
 
       socket.on("clients-init", function(json){
+        /* on browser connection create charts for all M5 client connected */
         if ( newconn == true) {
           for (id of json.clients){
             createGraph(id);
@@ -166,7 +173,8 @@
       });
 
       socket.on("connection-lost", function(json) {
-        console.log("Lost connection with: " + json.id);
+        /* if connection from M5 is lost delete the corresponding chart and log conection lost */
+        console.log("Lost connection with: " + json.id); // TODO: use bulma modal (https://bulma.io/documentation/components/modal/)
         var d = document.querySelector(".M5-" + json.id);
         d.parentNode.removeChild(d);
         m5s = m5s.filter(function(elem){
