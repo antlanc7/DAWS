@@ -71,5 +71,5 @@ if __name__ == '__main__':
     acc_thread = threading.Thread(target=acceptation_thread, args=(s,controller), daemon=True)
     acc_thread.start()
 
-    socketio.run(app)
+    socketio.run(app, host='0.0.0.0', port=5000)
 

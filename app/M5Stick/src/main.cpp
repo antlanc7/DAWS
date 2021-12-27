@@ -24,7 +24,7 @@
 /* COMMANDS
 *   supported commands:
 *     - CMD_START:      start acquisition, see getDataT and sendData functions,
-      - CMD_PING:       to check connection status,
+      - CMD_PING:       to check connection status,   
       - CMD_WHEREISIT:  to check where this M5 is (phisically), see whereIsIt function
       - CMD_STOP:       to inform the server that acquisition is stopped
 */
