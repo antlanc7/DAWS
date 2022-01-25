@@ -64,10 +64,10 @@
             <div class="navbar-item">\
               <div class="field has-addons">\
                 <div class="control">\
-                  <input class="input" type="text" id="csv-name-" ' + id + ' placeholder="Acquisition file name" required disabled>\
-                </div>\
-                <div class="control">\
-                  <input type="button" class="button is-primary" value="Save" onclick = "" disabled></input>\
+                  <form action="/get_csv" method="get">\
+                    <input type="hidden" name="id" value="'+id+'" />\
+                    <input type="submit" class="button is-primary" value="Save"></input>\
+                  </form>\
                 </div>\
               </div>\
             </div>\

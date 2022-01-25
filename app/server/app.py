@@ -1,6 +1,7 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file, request, abort
 from flask_socketio import SocketIO
 
+import os
 import socket
 import threading
 from controller import Controller
@@ -52,6 +53,20 @@ def where_is_it(id):
 @app.route("/")
 def home():
     return render_template("index.html", clients = controller.clients)
+
+@app.route("/get_csv", methods=["GET"])
+def get_csv():
+    id = request.args.get("id", default=-1, type=int)
+    acq = request.args.get("acq", default=-1, type=int)
+    try:
+        if acq==-1:
+            acq = controller.clients[id].acq_count -1
+    
+        file_name = f"id{id}_acq{acq}.csv"
+        return send_file(os.path.join("..",file_name), mimetype="text/csv", download_name=file_name, as_attachment=True)
+
+    except:
+        return abort(400)
 
 
 if __name__ == '__main__':
